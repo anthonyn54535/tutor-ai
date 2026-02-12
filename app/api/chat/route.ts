@@ -5,6 +5,12 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+type HistoryRow = {
+    role: string;
+    content: string;
+  };
+  
+  
 type ReqBody = {
   sessionId?: string;
   topic: string;
@@ -64,17 +70,23 @@ export async function POST(req: Request) {
   
 
   // Pull last ~12 messages for context
-  const history = await prisma.message.findMany({
+  const history: HistoryRow[] = await prisma.message.findMany({
     where: { sessionId },
     orderBy: { createdAt: "asc" },
     take: 12,
+    select: { role: true, content: true },
   });
+  
+  
 
   const messages = [
     { role: "system" as const, content: TUTOR_SYSTEM_PROMPT },
     { role: "system" as const, content: `Topic: ${topic}. ${modeInstruction(mode)}` },
-    ...history.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
-  ];
+    ...history.map((m: HistoryRow) => ({
+  role: (m.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
+  content: m.content,
+}))]
+
 
   const resp = await llm.chat.completions.create({
     model: process.env.LM_MODEL || "",
