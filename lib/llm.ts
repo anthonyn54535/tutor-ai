@@ -1,6 +1,12 @@
 import OpenAI from "openai";
 
+const isLocalLM = !!process.env.LM_BASE_URL;
+
 export const llm = new OpenAI({
-  apiKey: process.env.LM_API_KEY || "lm-studio",
-  baseURL: process.env.LM_BASE_URL, // http://localhost:1234/v1
+  apiKey: isLocalLM
+    ? process.env.LM_API_KEY
+    : process.env.OPENAI_API_KEY,
+  baseURL: isLocalLM
+    ? process.env.LM_BASE_URL
+    : undefined,
 });
