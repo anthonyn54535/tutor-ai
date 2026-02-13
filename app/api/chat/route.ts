@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { llm } from "@/lib/llm";
 import { TUTOR_SYSTEM_PROMPT } from "@/lib/tutorPrompt";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
-  
 type ReqBody = {
   sessionId?: string;
   topic: string;
