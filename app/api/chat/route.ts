@@ -4,12 +4,6 @@ import { TUTOR_SYSTEM_PROMPT } from "@/lib/tutorPrompt";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-
-type HistoryRow = {
-    role: string;
-    content: string;
-  };
-  
   
 type ReqBody = {
   sessionId?: string;
@@ -70,22 +64,24 @@ export async function POST(req: Request) {
   
 
   // Pull last ~12 messages for context
-  const history: HistoryRow[] = await prisma.message.findMany({
-    where: { sessionId },
-    orderBy: { createdAt: "asc" },
-    take: 12,
-    select: { role: true, content: true },
-  });
+type HistoryRow = { role: "user" | "assistant"; content: string };
+
+const history = (await prisma.message.findMany({
+  where: { sessionId },
+  orderBy: { createdAt: "asc" },
+  take: 12,
+  select: { role: true, content: true },
+})) as HistoryRow[];
+
+  
   
   
 
   const messages = [
     { role: "system" as const, content: TUTOR_SYSTEM_PROMPT },
     { role: "system" as const, content: `Topic: ${topic}. ${modeInstruction(mode)}` },
-    ...history.map((m: HistoryRow) => ({
-  role: (m.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
-  content: m.content,
-}))]
+    ...history.map((m: HistoryRow) => ({ role: m.role, content: m.content }))
+]
 
 
   const resp = await llm.chat.completions.create({
