@@ -83,10 +83,10 @@ const history = (await prisma.message.findMany({
 
 
   const resp = await llm.chat.completions.create({
-    model: process.env.LM_MODEL || "",
+    model: process.env.OPENAI_MODEL || process.env.LM_MODEL || "gpt-4o-mini",
     messages,
-    temperature: 0.4,
   });
+  
 
   const assistant = resp.choices[0]?.message?.content ?? "I’m not sure. Try again.";
 
